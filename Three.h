@@ -1,10 +1,10 @@
 #ifndef THREE_H
 #define THREE_H
 
-#include <vector>
 #include <string>
 #include <initializer_list>
 #include <stdexcept>
+#include <algorithm>
 
 class Three {
 public:
@@ -14,22 +14,26 @@ public:
     Three(const std::string &t);
     Three(const Three& other);
     Three(Three&& other) noexcept;
-    virtual ~Three() noexcept;
+    ~Three() noexcept;
 
     Three operator+(const Three& other) const;
     Three operator-(const Three& other) const;
     Three& operator=(const Three& other);
+    Three& operator=(Three&& other) noexcept;
 
     bool operator==(const Three& other) const;
     bool operator<(const Three& other) const;
     bool operator>(const Three& other) const;
 
-    std::vector<unsigned char> getDigits() const;
+    unsigned char* getDigits() const;
+    size_t getLength() const;
 
 private:
-    std::vector<unsigned char> digits;
+    size_t len;
+    unsigned char* digits;
 
     void validate() const;
+    void strip();
 };
 
-#endif 
+#endif

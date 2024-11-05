@@ -3,8 +3,10 @@
 
 std::string to_string(const Three& t) {
     std::string result;
-    for (auto digit : t.getDigits()) {
-        result = std::to_string(digit) + result;
+    size_t length = t.getLength();
+    const unsigned char* digits = t.getDigits();
+    for (size_t i = 0; i < length; ++i) {
+        result = std::to_string(digits[i]) + result;
     }
     return result;
 }

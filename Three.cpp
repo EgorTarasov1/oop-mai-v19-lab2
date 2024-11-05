@@ -1,60 +1,67 @@
 #include "Three.h"
+#include <stdexcept>
 #include <algorithm>
+#include <cstring> 
 
-Three::Three() : digits(1, 0) {}
+Three::Three() : len(1), digits(new unsigned char[1]{0}) {}
 
-Three::Three(const size_t &n, unsigned char t) : digits(n, t) {
-    for (unsigned char digit : digits) {
-        if (digit >= 3) {
-            throw std::invalid_argument("Invalid digit for base 3");
-        }
+Three::Three(const size_t &n, unsigned char t) : len(n), digits(new unsigned char[n]) {
+    if (t >= 3) {
+        throw std::invalid_argument("Invalid digit for base 3");
     }
+    std::fill(digits, digits + n, t);
 }
 
-Three::Three(const std::initializer_list<unsigned char> &t) : digits(t) {
+Three::Three(const std::initializer_list<unsigned char> &t) : len(t.size()), digits(new unsigned char[t.size()]) {
+    std::copy(t.begin(), t.end(), digits);
     validate();
 }
 
-Three::Three(const std::string &t) {
-    for (char c : t) {
+Three::Three(const std::string &t) : len(t.size()), digits(new unsigned char[t.size()]) {
+    for (size_t i = 0; i < t.size(); ++i) {
+        char c = t[t.size() - 1 - i]; 
         if (c < '0' || c > '2') {
             throw std::invalid_argument("Invalid character for base 3");
         }
-    }
-    
-    for (auto it = t.rbegin(); it != t.rend(); ++it) {
-        digits.push_back(*it - '0');
+        digits[i] = c - '0';
     }
 }
 
-Three::Three(const Three& other) : digits(other.digits) {}
+Three::Three(const Three& other) : len(other.len), digits(new unsigned char[other.len]) {
+    std::memcpy(digits, other.digits, len);
+}
 
-Three::Three(Three&& other) noexcept : digits(std::move(other.digits)) {}
+Three::Three(Three&& other) noexcept : len(other.len), digits(other.digits) {
+    other.len = 0;
+    other.digits = nullptr;
+}
 
-Three::~Three() noexcept {}
+Three::~Three() noexcept {
+    delete[] digits;
+}
 
 Three Three::operator+(const Three& other) const {
+    size_t maxLength = std::max(len, other.len);
     Three result;
-    size_t maxLength = std::max(digits.size(), other.digits.size());
-    result.digits.resize(maxLength, 0);
+    delete[] result.digits;
+    result.digits = new unsigned char[maxLength + 1]; 
+    result.len = maxLength;
 
     unsigned char carry = 0;
     for (size_t i = 0; i < maxLength; ++i) {
-        unsigned char digit1 = (i < digits.size()) ? digits[i] : 0;
-        unsigned char digit2 = (i < other.digits.size()) ? other.digits[i] : 0;
+        unsigned char digit1 = (i < len) ? digits[i] : 0;
+        unsigned char digit2 = (i < other.len) ? other.digits[i] : 0;
         unsigned char sum = digit1 + digit2 + carry;
-        result.digits[i] = sum % 3;  
-        carry = sum / 3;             
+        result.digits[i] = sum % 3;
+        carry = sum / 3;
     }
 
     if (carry != 0) {
-        result.digits.push_back(carry);
+        result.digits[maxLength] = carry;
+        ++result.len;
     }
 
-    while (result.digits.size() > 1 && result.digits.back() == 0) {
-        result.digits.pop_back();
-    }
-
+    result.strip();
     return result;
 }
 
@@ -64,15 +71,17 @@ Three Three::operator-(const Three& other) const {
     }
 
     Three result;
-    result.digits.resize(digits.size(), 0);
+    delete[] result.digits;
+    result.digits = new unsigned char[len];
+    result.len = len;
 
     unsigned char borrow = 0;
-    for (size_t i = 0; i < digits.size(); ++i) {
+    for (size_t i = 0; i < len; ++i) {
         unsigned char digit1 = digits[i];
-        unsigned char digit2 = (i < other.digits.size()) ? other.digits[i] : 0;
+        unsigned char digit2 = (i < other.len) ? other.digits[i] : 0;
         int sub = digit1 - digit2 - borrow;
         if (sub < 0) {
-            sub += 3;  
+            sub += 3;
             borrow = 1;
         } else {
             borrow = 0;
@@ -80,29 +89,44 @@ Three Three::operator-(const Three& other) const {
         result.digits[i] = sub;
     }
 
-    while (result.digits.size() > 1 && result.digits.back() == 0) {
-        result.digits.pop_back();
-    }
-
+    result.strip();
     return result;
 }
 
 Three& Three::operator=(const Three& other) {
     if (this != &other) {
+        delete[] digits;
+        len = other.len;
+        digits = new unsigned char[len];
+        std::memcpy(digits, other.digits, len);
+    }
+    return *this;
+}
+
+Three& Three::operator=(Three&& other) noexcept {
+    if (this != &other) {
+        delete[] digits;
+        len = other.len;
         digits = other.digits;
+        other.len = 0;
+        other.digits = nullptr;
     }
     return *this;
 }
 
 bool Three::operator==(const Three& other) const {
-    return digits == other.digits;
+    if (len != other.len) return false;
+    for (size_t i = 0; i < len; ++i) {
+        if (digits[i] != other.digits[i]) return false;
+    }
+    return true;
 }
 
 bool Three::operator<(const Three& other) const {
-    if (digits.size() != other.digits.size()) {
-        return digits.size() < other.digits.size();
+    if (len != other.len) {
+        return len < other.len;
     }
-    for (size_t i = digits.size(); i-- > 0; ) {
+    for (size_t i = len; i-- > 0; ) {
         if (digits[i] != other.digits[i]) {
             return digits[i] < other.digits[i];
         }
@@ -114,14 +138,24 @@ bool Three::operator>(const Three& other) const {
     return !(*this < other) && !(*this == other);
 }
 
-std::vector<unsigned char> Three::getDigits() const {
+unsigned char* Three::getDigits() const {
     return digits;
 }
 
+size_t Three::getLength() const {
+    return len;
+}
+
 void Three::validate() const {
-    for (unsigned char digit : digits) {
-        if (digit >= 3) {
+    for (size_t i = 0; i < len; ++i) {
+        if (digits[i] >= 3) {
             throw std::invalid_argument("Invalid digit for base 3");
         }
+    }
+}
+
+void Three::strip() {
+    while (len > 1 && digits[len - 1] == 0) {
+        --len;
     }
 }
