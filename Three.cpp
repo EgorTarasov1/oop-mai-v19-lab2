@@ -40,7 +40,7 @@ Three::~Three() noexcept {
     delete[] digits;
 }
 
-Three Three::operator+(const Three& other) const {
+Three Three::plus(const Three& other) const {
     size_t maxLength = std::max(len, other.len);
     Three result;
     delete[] result.digits;
@@ -65,8 +65,8 @@ Three Three::operator+(const Three& other) const {
     return result;
 }
 
-Three Three::operator-(const Three& other) const {
-    if (*this < other) {
+Three Three::minus(const Three& other) const {
+    if (this->lessThan(other)) {
         throw std::invalid_argument("Result cannot be negative");
     }
 
@@ -114,7 +114,7 @@ Three& Three::operator=(Three&& other) noexcept {
     return *this;
 }
 
-bool Three::operator==(const Three& other) const {
+bool Three::equals(const Three& other) const {
     if (len != other.len) return false;
     for (size_t i = 0; i < len; ++i) {
         if (digits[i] != other.digits[i]) return false;
@@ -122,7 +122,7 @@ bool Three::operator==(const Three& other) const {
     return true;
 }
 
-bool Three::operator<(const Three& other) const {
+bool Three::lessThan(const Three& other) const {
     if (len != other.len) {
         return len < other.len;
     }
@@ -134,8 +134,8 @@ bool Three::operator<(const Three& other) const {
     return false;
 }
 
-bool Three::operator>(const Three& other) const {
-    return !(*this < other) && !(*this == other);
+bool Three::greaterThan(const Three& other) const {
+    return !this->lessThan(other) && !this->equals(other);
 }
 
 unsigned char* Three::getDigits() const {
