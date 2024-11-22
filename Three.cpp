@@ -93,7 +93,7 @@ Three Three::minus(const Three& other) const {
     return result;
 }
 
-Three& Three::operator=(const Three& other) {
+Three& Three::copy(const Three& other) {
     if (this != &other) {
         delete[] digits;
         len = other.len;
@@ -103,7 +103,7 @@ Three& Three::operator=(const Three& other) {
     return *this;
 }
 
-Three& Three::operator=(Three&& other) noexcept {
+Three& Three::move(Three&& other) noexcept {
     if (this != &other) {
         delete[] digits;
         len = other.len;

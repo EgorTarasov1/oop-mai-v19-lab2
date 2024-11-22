@@ -32,7 +32,6 @@ int main() {
         std::cout << "t1 > t2: " << (t1.greaterThan(t2) ? "true" : "false") << std::endl;
 
         Three t6;
-        t6 = t1; 
         std::cout << "t6 (assigned from t1): " << to_string(t6) << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "Exception: " << e.what() << std::endl;

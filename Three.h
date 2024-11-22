@@ -25,8 +25,8 @@ public:
     unsigned char* getDigits() const;
     size_t getLength() const;
 
-    Three& operator=(const Three& other); 
-    Three& operator=(Three&& other) noexcept; 
+    Three& copy(const Three& other); 
+    Three& move(Three&& other) noexcept; 
 
 private:
     size_t len;
